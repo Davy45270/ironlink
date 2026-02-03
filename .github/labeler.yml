@@ -1,0 +1,10 @@
+api:
+  - "services/**"
+ui:
+  - "apps/**"
+docs:
+  - "docs/**"
+seed:
+  - "seed/**"
+ci:
+  - ".github/**"

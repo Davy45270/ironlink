@@ -1,0 +1,60 @@
+{
+  "project": {
+    "id": "proj_nextgen",
+    "name": "ironlink",
+    "statuses": ["todo", "doing", "review", "done"]
+  },
+  "items": [
+    {"id":"epic_tech","type":"epic","title":"Fondations techniques","description":"API/IHM/CI/tests/observabilité","status":"todo","order":1,"assignee":null,"tags":["tech","foundation"],"createdAt":"2026-02-03T02:58:00Z","updatedAt":"2026-02-03T02:58:00Z"},
+    {"id":"story_api_items","type":"story","title":"Endpoint API /api/items","description":"Expose project+items+links pour IHM","status":"todo","parentId":"epic_tech","order":2,"assignee":null,"tags":["api","kanban"],"createdAt":"2026-02-03T02:58:00Z","updatedAt":"2026-02-03T02:58:00Z"},
+    {"id":"story_cicd","type":"story","title":"CI/CD GitHub Actions","description":"Workflow build+tests","status":"todo","parentId":"epic_tech","order":3,"assignee":null,"tags":["cicd"],"createdAt":"2026-02-03T02:58:00Z","updatedAt":"2026-02-03T02:58:00Z"},
+    {"id":"story_tests_api","type":"story","title":"Tests automatisés API gateway","description":"healthz + seed/items","status":"todo","parentId":"epic_tech","order":4,"assignee":null,"tags":["tests","qa"],"createdAt":"2026-02-03T02:58:00Z","updatedAt":"2026-02-03T02:58:00Z"},
+    {"id":"story_dnd","type":"story","title":"IHM DnD (dnd-kit)","description":"drag & drop + reorder","status":"todo","parentId":"epic_tech","order":5,"assignee":null,"tags":["ui","dnd"],"createdAt":"2026-02-03T02:58:00Z","updatedAt":"2026-02-03T02:58:00Z"},
+    {"id":"story_cards","type":"story","title":"Gestion cartes enrichie","description":"drawer + champs éditables","status":"todo","parentId":"epic_tech","order":6,"assignee":null,"tags":["ui"],"createdAt":"2026-02-03T02:58:00Z","updatedAt":"2026-02-03T02:58:00Z"},
+    {"id":"story_attachments","type":"story","title":"Pièces jointes (images/fichiers externes)","description":"ajout/suppression + preview (URL)","status":"todo","parentId":"epic_tech","order":7,"assignee":null,"tags":["ui","files"],"createdAt":"2026-02-03T02:58:00Z","updatedAt":"2026-02-03T02:58:00Z"},
+    {"id":"story_api_ui","type":"story","title":"Connexion IHM ↔ API /api/items","description":"consommer l’API pour afficher le board","status":"todo","parentId":"epic_tech","order":8,"assignee":null,"tags":["ui","api"],"createdAt":"2026-02-03T03:04:00Z","updatedAt":"2026-02-03T03:04:00Z"},
+    {"id":"story_valkey","type":"story","title":"Orchestration logs via Valkey","description":"producer/consumer + alertes WhatsApp (home lab, logs non prioritaires)","status":"todo","parentId":"epic_tech","order":9,"assignee":null,"tags":["ops","monitoring"],"createdAt":"2026-02-03T02:58:00Z","updatedAt":"2026-02-03T06:59:00Z"},
+
+    {"id":"qa_api_items","type":"task","title":"QA: tests /api/items","description":"Prereq: story_api_items","status":"todo","parentId":"epic_tech","order":9,"assignee":"QA","tags":["qa","async"],"createdAt":"2026-02-03T03:00:00Z","updatedAt":"2026-02-03T03:00:00Z"},
+    {"id":"qa_cicd","type":"task","title":"QA: tests CI/CD","description":"Prereq: story_cicd","status":"todo","parentId":"epic_tech","order":10,"assignee":"QA","tags":["qa","async"],"createdAt":"2026-02-03T03:00:00Z","updatedAt":"2026-02-03T03:00:00Z"},
+    {"id":"qa_dnd","type":"task","title":"QA: tests DnD + responsive","description":"Prereq: story_dnd","status":"todo","parentId":"epic_tech","order":11,"assignee":"QA","tags":["qa","async"],"createdAt":"2026-02-03T03:00:00Z","updatedAt":"2026-02-03T03:00:00Z"},
+    {"id":"qa_cards","type":"task","title":"QA: tests édition cartes + pièces jointes","description":"Prereq: story_cards, story_attachments","status":"todo","parentId":"epic_tech","order":12,"assignee":"QA","tags":["qa","async"],"createdAt":"2026-02-03T03:00:00Z","updatedAt":"2026-02-03T03:00:00Z"},
+    {"id":"qa_valkey","type":"task","title":"QA: tests orchestration Valkey","description":"Prereq: story_valkey","status":"todo","parentId":"epic_tech","order":13,"assignee":"QA","tags":["qa","async"],"createdAt":"2026-02-03T03:00:00Z","updatedAt":"2026-02-03T03:00:00Z"},
+
+    {"id":"epic_sec","type":"epic","title":"Gouvernance sécurité & conformité (HDS/SecNumCloud)","description":"Cartographie, IAM, logs, chiffrement","status":"todo","order":20,"assignee":null,"tags":["security","compliance"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"epic_devsecops","type":"epic","title":"Sécurité applicative & DevSecOps","description":"SAST/DAST, threat modeling, patching","status":"todo","order":20,"assignee":null,"tags":["security","devsecops"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"epic_ops","type":"epic","title":"Exploitabilité HDS/SecNumCloud","description":"PRA/PCA, supervision, conformité hébergeur","status":"todo","order":30,"assignee":null,"tags":["ops","compliance"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"epic_kanban","type":"epic","title":"Kanban & delivery","description":"DoR/DoD, WIP, métriques flux","status":"todo","order":40,"assignee":null,"tags":["process"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"epic_ux","type":"epic","title":"IHM & expérience utilisateur sécurisée","description":"Auth/consentement, erreurs, RBAC UI","status":"todo","order":50,"assignee":null,"tags":["ux","security"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"epic_data","type":"epic","title":"Données sensibles & anonymisation","description":"Masquage non‑prod, minimisation, rétention","status":"todo","order":60,"assignee":null,"tags":["data","privacy"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"epic_tests","type":"epic","title":"Tests & validation sécurité","description":"Pentest externe, tests intrusion internes","status":"todo","order":70,"assignee":null,"tags":["security","qa"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+
+    {"id":"story_data_map","type":"story","title":"Cartographier données & traitements","description":"DPIA, registre, classification","status":"todo","parentId":"epic_sec","order":11,"assignee":null,"tags":["compliance"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"story_rbac_mfa","type":"story","title":"Politique d’accès (RBAC/least‑privilege)","description":"Rôles, audit droits (MFA hors scope pour l’instant)","status":"doing","parentId":"epic_sec","order":12,"assignee":null,"tags":["security","iam"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-03T03:46:00Z"},
+    {"id":"story_logs","type":"story","title":"Journalisation & traçabilité","description":"Logs immuables, horodatage, rétention HDS","status":"todo","parentId":"epic_sec","order":13,"assignee":null,"tags":["logging","compliance"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"story_crypto","type":"story","title":"Chiffrement & gestion des secrets","description":"Chiffrement repos/transit, coffre, rotation clés","status":"todo","parentId":"epic_sec","order":14,"assignee":null,"tags":["crypto","secrets"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+
+    {"id":"story_sast","type":"story","title":"SAST/DAST/Dependency scan CI","description":"Scans bloquants sur vulnérabilités critiques","status":"todo","parentId":"epic_devsecops","order":21,"assignee":null,"tags":["ci","security"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"story_threat","type":"story","title":"Modèle de menace (STRIDE)","description":"Menaces listées, plan d’actions priorisé","status":"todo","parentId":"epic_devsecops","order":22,"assignee":null,"tags":["threat-model"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"story_patch","type":"story","title":"Gestion vulnérabilités & patching","description":"SLA critique <7j, dashboard suivi","status":"todo","parentId":"epic_devsecops","order":23,"assignee":null,"tags":["patching"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+
+    {"id":"story_pra","type":"story","title":"Sauvegardes, PRA/PCA","description":"RPO/RTO définis, tests trimestriels","status":"todo","parentId":"epic_ops","order":31,"assignee":null,"tags":["backup","dr"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"story_monitoring","type":"story","title":"Supervision & alerting","description":"Métriques clés, alertes 24/7, runbooks","status":"todo","parentId":"epic_ops","order":32,"assignee":null,"tags":["monitoring"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"story_hosting","type":"story","title":"Conformité hébergeur","description":"Clauses HDS/SNC, registre sous‑traitants","status":"todo","parentId":"epic_ops","order":33,"assignee":null,"tags":["legal","compliance"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+
+    {"id":"story_dordod","type":"story","title":"Definition of Ready/Done alignée conformité","description":"Checklist sécurité, DoD inclut tests/logs","status":"todo","parentId":"epic_kanban","order":41,"assignee":null,"tags":["process"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"story_wip","type":"story","title":"WIP limits + politiques de tirage","description":"Limites visibles, alertes de dépassement","status":"todo","parentId":"epic_kanban","order":42,"assignee":null,"tags":["process"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"story_flow","type":"story","title":"Métriques flux (lead time, throughput)","description":"Dashboard hebdo + actions d’amélioration","status":"todo","parentId":"epic_kanban","order":43,"assignee":null,"tags":["metrics"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+
+    {"id":"story_auth_ui","type":"story","title":"Parcours authentification/consentement","description":"Consentement RGPD (MFA hors scope)","status":"todo","parentId":"epic_ux","order":51,"assignee":null,"tags":["ux","auth"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-03T03:46:00Z"},
+    {"id":"story_errors","type":"story","title":"Gestion erreurs & messages sécurité","description":"Pas de fuite d’info, messages guidants","status":"todo","parentId":"epic_ux","order":52,"assignee":null,"tags":["ux","security"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"story_rbac_ui","type":"story","title":"Accès logs/exports par rôle","description":"Écrans conditionnés RBAC, export tracé","status":"todo","parentId":"epic_ux","order":53,"assignee":null,"tags":["rbac","audit"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+
+    {"id":"story_masking","type":"story","title":"Masquage/anonymisation en non‑prod","description":"Données prod jamais en non‑prod","status":"todo","parentId":"epic_data","order":61,"assignee":null,"tags":["privacy"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"story_retention","type":"story","title":"Minimisation & rétention","description":"Purge automatisée, suppression champs inutiles","status":"todo","parentId":"epic_data","order":62,"assignee":null,"tags":["privacy"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+
+    {"id":"story_pentest","type":"story","title":"Pentest externe annuel","description":"Rapport reçu, CVEs traitées","status":"todo","parentId":"epic_tests","order":71,"assignee":null,"tags":["security","qa"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"},
+    {"id":"story_intrusion","type":"story","title":"Tests d’intrusion internes ciblés","description":"Scénarios validés, correctifs vérifiés","status":"todo","parentId":"epic_tests","order":72,"assignee":null,"tags":["security","qa"],"createdAt":"2026-02-02T17:38:00Z","updatedAt":"2026-02-02T17:38:00Z"}
+  ],
+  "links": []
+}

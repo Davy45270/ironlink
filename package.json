@@ -1,0 +1,15 @@
+{
+  "name": "nextgen-pm",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier -w .",
+    "test": "npm --workspace services/api-gateway test",
+    "dev": "echo 'dev: TODO'"
+  }
+}

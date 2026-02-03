@@ -1,0 +1,17 @@
+name: "🧩 Task"
+description: "Tâche technique"
+labels: ["task"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Résumé
+    validations:
+      required: true
+  - type: textarea
+    id: checklist
+    attributes:
+      label: Checklist
+      value: |
+        - [ ]
+        - [ ]

@@ -1,0 +1,33 @@
+name: "🐛 Bug"
+description: "Signaler un bug"
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: "Que se passe-t-il ?"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes pour reproduire
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Résultat attendu
+      validations:
+        required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexte/Logs
+      validations:
+        required: false
