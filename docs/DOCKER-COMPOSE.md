@@ -10,7 +10,7 @@
   - User/Pass: `postgres/postgres`
   - Volume: `pgdata`
 
-- **redis**: `redis:7-alpine`
+- **valkey**: `valkey/valkey:7.2-alpine`
   - Port host: `16379` → conteneur `6379`
 
 - **nats**: `nats:2.10-alpine`
