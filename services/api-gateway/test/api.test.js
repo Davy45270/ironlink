@@ -61,3 +61,35 @@ test('POST /api/seed + GET /api/items', async () => {
 
   child.kill();
 });
+
+
+test('v1 CRUD items', async () => {
+  const base = process.env.API_BASE || 'http://localhost:13000';
+  const headers = { 'content-type': 'application/json', 'x-role': 'admin' };
+
+  // create
+  let res = await fetch(`${base}/v1/items`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ title: 'Test item', type: 'task', status: 'todo' }),
+  });
+  assert.equal(res.status, 201);
+  const created = await res.json();
+  assert.ok(created.id);
+
+  // get
+  res = await fetch(`${base}/v1/items/${created.id}`, { headers: { 'x-role': 'admin' } });
+  assert.equal(res.status, 200);
+
+  // patch
+  res = await fetch(`${base}/v1/items/${created.id}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ title: 'Test item updated', priority: 'high' }),
+  });
+  assert.equal(res.status, 200);
+
+  // delete
+  res = await fetch(`${base}/v1/items/${created.id}`, { method: 'DELETE', headers: { 'x-role': 'admin' } });
+  assert.equal(res.status, 204);
+});
