@@ -78,6 +78,7 @@ const openapi = {
   info: {
     title: 'IronLink API',
     version: '1.0.0',
+    description: 'API v1 stable pour IronLink (Kanban).',
   },
   servers: [{ url: '/' }],
   paths: {
@@ -94,7 +95,7 @@ const openapi = {
           { name: 'assignee', in: 'query', schema: { type: 'string' } },
           { name: 'tag', in: 'query', schema: { type: 'string' } },
         ],
-        responses: { '200': { description: 'Items', content: { 'application/json': { schema: { $ref: '#/components/schemas/ItemsResponse' } } } } },
+        responses: { '200': { description: 'Items', content: { 'application/json': { schema: { $ref: '#/components/schemas/ItemsResponse' } } } } , '403': { description: 'Forbidden', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } } },
       },
       post: {
         summary: 'Create item (v1)',
@@ -124,13 +125,76 @@ const openapi = {
   },
   components: {
     schemas: {
-      Project: { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, createdAt: { type: 'string' } } },
-      Item: { type: 'object', properties: { id: { type: 'string' }, type: { type: 'string' }, title: { type: 'string' }, status: { type: 'string' } } },
-      Link: { type: 'object', properties: { id: { type: 'string' }, fromId: { type: 'string' }, toId: { type: 'string' }, type: { type: 'string' } } },
-      AuditEvent: { type: 'object', properties: { id: { type: 'string' }, action: { type: 'string' }, role: { type: 'string' }, at: { type: 'string' } } },
-      ErrorResponse: { type: 'object', properties: { error: { type: 'string' }, message: { type: 'string' } } },
-      ItemsResponse: { type: 'object', properties: { items: { type: 'array', items: { $ref: '#/components/schemas/Item' } } , total: { type: 'integer' }, limit: { type: 'integer' }, offset: { type: 'integer' } } },
-      ProjectsResponse: { type: 'object', properties: { items: { type: 'array', items: { $ref: '#/components/schemas/Project' } } } },
+      Project: {
+        type: 'object',
+        required: ['id', 'name', 'createdAt'],
+        properties: {
+          id: { type: 'string', example: 'prj_abc123' },
+          name: { type: 'string', example: 'IronLink' },
+          createdAt: { type: 'string', example: '2026-02-03T10:00:00Z' },
+          updatedAt: { type: 'string', example: '2026-02-03T10:05:00Z' },
+        },
+      },
+      Item: {
+        type: 'object',
+        required: ['id', 'title', 'type', 'status'],
+        properties: {
+          id: { type: 'string', example: 'item_abc123' },
+          title: { type: 'string', example: 'Mettre en place le CRUD' },
+          type: { type: 'string', enum: ['epic','story','task','bug'], example: 'story' },
+          status: { type: 'string', enum: ['backlog','todo','doing','review','done'], example: 'todo' },
+          priority: { type: 'string', enum: ['low','med','high','critical'], example: 'med' },
+          description: { type: 'string', example: 'Implémenter les endpoints v1.' },
+          assignee: { type: 'string', example: 'dev' },
+          tags: { type: 'array', items: { type: 'string' }, example: ['api','v1'] },
+          createdAt: { type: 'string', example: '2026-02-03T10:00:00Z' },
+          updatedAt: { type: 'string', example: '2026-02-03T10:05:00Z' },
+        },
+      },
+      Link: {
+        type: 'object',
+        required: ['id', 'fromId', 'toId', 'type'],
+        properties: {
+          id: { type: 'string', example: 'lnk_abc123' },
+          fromId: { type: 'string', example: 'item_a' },
+          toId: { type: 'string', example: 'item_b' },
+          type: { type: 'string', example: 'blocks' },
+        },
+      },
+      AuditEvent: {
+        type: 'object',
+        required: ['id', 'action', 'role', 'at'],
+        properties: {
+          id: { type: 'string', example: 'audit_abc123' },
+          action: { type: 'string', example: 'items:update' },
+          role: { type: 'string', example: 'admin' },
+          at: { type: 'string', example: '2026-02-03T10:06:00Z' },
+          meta: { type: 'object' },
+        },
+      },
+      ErrorResponse: {
+        type: 'object',
+        required: ['error'],
+        properties: {
+          error: { type: 'string', example: 'invalid_request' },
+          message: { type: 'string', example: 'name is required' },
+        },
+      },
+      ItemsResponse: {
+        type: 'object',
+        properties: {
+          items: { type: 'array', items: { $ref: '#/components/schemas/Item' } },
+          total: { type: 'integer', example: 41 },
+          limit: { type: 'integer', example: 50 },
+          offset: { type: 'integer', example: 0 },
+        },
+      },
+      ProjectsResponse: {
+        type: 'object',
+        properties: {
+          items: { type: 'array', items: { $ref: '#/components/schemas/Project' } },
+        },
+      },
     },
   },
 };
