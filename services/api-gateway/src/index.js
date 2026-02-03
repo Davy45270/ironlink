@@ -33,7 +33,7 @@ function json(res, status, obj) {
     'content-type': 'application/json',
     'access-control-allow-origin': '*',
     'access-control-allow-headers': 'content-type,x-seed-token,x-role',
-    'access-control-allow-methods': 'GET,POST,OPTIONS',
+    'access-control-allow-methods': 'GET,POST,PATCH,OPTIONS',
   });
   res.end(JSON.stringify(obj));
 }
@@ -50,6 +50,10 @@ function id(prefix = 'p') {
   return `${prefix}_${Math.random().toString(16).slice(2)}${Date.now().toString(16)}`;
 }
 
+function parseUrl(req) {
+  return new URL(req.url, 'http://localhost');
+}
+
 
 const openapi = {
   openapi: '3.0.3',
@@ -61,14 +65,34 @@ const openapi = {
   paths: {
     '/healthz': { get: { summary: 'Health check', responses: { '200': { description: 'OK' } } } },
     '/api/items': { get: { summary: 'Legacy items list', responses: { '200': { description: 'Items' } } } },
-    '/v1/items': { get: { summary: 'Items list (v1)', responses: { '200': { description: 'Items' } } } },
+    '/v1/items': {
+      get: {
+        summary: 'Items list (v1)',
+        parameters: [
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+          { name: 'offset', in: 'query', schema: { type: 'integer' } },
+        ],
+        responses: { '200': { description: 'Items', content: { 'application/json': { schema: { $ref: '#/components/schemas/ItemsResponse' } } } } },
+      },
+      post: {
+        summary: 'Create item (v1)',
+        responses: { '201': { description: 'Created', content: { 'application/json': { schema: { $ref: '#/components/schemas/Item' } } } } },
+      },
+    },
+    '/v1/items/{itemId}': {
+      get: { summary: 'Get item', responses: { '200': { description: 'Item', content: { 'application/json': { schema: { $ref: '#/components/schemas/Item' } } } }, '404': { description: 'Not found' } } },
+      patch: { summary: 'Update item', responses: { '200': { description: 'Updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/Item' } } } } } },
+    },
     '/api/seed': { post: { summary: 'Legacy seed', parameters: [{ name: 'dryRun', in: 'query', schema: { type: 'boolean' } }], responses: { '200': { description: 'Seed result' } } } },
     '/v1/seed': { post: { summary: 'Seed data (v1)', parameters: [{ name: 'dryRun', in: 'query', schema: { type: 'boolean' } }], responses: { '200': { description: 'Seed result' } } } },
     '/api/audit': { get: { summary: 'Legacy audit', responses: { '200': { description: 'Audit list' } } } },
     '/v1/audit': { get: { summary: 'Audit list (v1)', responses: { '200': { description: 'Audit list' } } } },
     '/v1/projects': {
-      get: { summary: 'List projects', responses: { '200': { description: 'Projects' } } },
-      post: { summary: 'Create project', responses: { '201': { description: 'Created' } } },
+      get: { summary: 'List projects', responses: { '200': { description: 'Projects', content: { 'application/json': { schema: { $ref: '#/components/schemas/ProjectsResponse' } } } } } },
+      post: { summary: 'Create project', responses: { '201': { description: 'Created', content: { 'application/json': { schema: { $ref: '#/components/schemas/Project' } } } } } },
+    },
+    '/v1/projects/{projectId}': {
+      get: { summary: 'Get project', responses: { '200': { description: 'Project', content: { 'application/json': { schema: { $ref: '#/components/schemas/Project' } } } }, '404': { description: 'Not found' } } },
     },
     '/v1/openapi.json': { get: { summary: 'OpenAPI spec', responses: { '200': { description: 'OpenAPI JSON' } } } },
     '/docs': { get: { summary: 'Swagger UI', responses: { '200': { description: 'HTML' } } } },
@@ -79,6 +103,9 @@ const openapi = {
       Item: { type: 'object', properties: { id: { type: 'string' }, type: { type: 'string' }, title: { type: 'string' }, status: { type: 'string' } } },
       Link: { type: 'object', properties: { id: { type: 'string' }, fromId: { type: 'string' }, toId: { type: 'string' }, type: { type: 'string' } } },
       AuditEvent: { type: 'object', properties: { id: { type: 'string' }, action: { type: 'string' }, role: { type: 'string' }, at: { type: 'string' } } },
+      ErrorResponse: { type: 'object', properties: { error: { type: 'string' }, message: { type: 'string' } } },
+      ItemsResponse: { type: 'object', properties: { items: { type: 'array', items: { $ref: '#/components/schemas/Item' } } } },
+      ProjectsResponse: { type: 'object', properties: { items: { type: 'array', items: { $ref: '#/components/schemas/Project' } } } },
     },
   },
 };
@@ -122,7 +149,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(204, {
         'access-control-allow-origin': '*',
         'access-control-allow-headers': 'content-type,x-seed-token,x-role',
-        'access-control-allow-methods': 'GET,POST,OPTIONS',
+        'access-control-allow-methods': 'GET,POST,PATCH,OPTIONS',
       });
       return res.end();
     }
@@ -247,6 +274,24 @@ const server = http.createServer(async (req, res) => {
 
       auditLog('projects:create', role, { projectId: project.id, name: project.name });
       return json(res, 201, project);
+    }
+
+    // GET /v1/projects/{projectId}
+    if (req.method === 'GET' && req.url.startsWith('/v1/projects/')) {
+      const role = getRole(req);
+      if (!can(role, 'projects:read')) return json(res, 403, { error: 'forbidden' });
+      const url = parseUrl(req);
+      const projectId = url.pathname.split('/')[3];
+      const client = await pgClient();
+      if (client) {
+        const r = await client.query('select id, name, created_at from projects where id=$1', [projectId]);
+        if (!r.rows[0]) return json(res, 404, { error: 'not_found' });
+        const x = r.rows[0];
+        return json(res, 200, { id: x.id, name: x.name, createdAt: x.created_at });
+      }
+      const p = mem.projects.get(projectId);
+      if (!p) return json(res, 404, { error: 'not_found' });
+      return json(res, 200, p);
     }
 
     // GET /v1/projects
