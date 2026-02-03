@@ -2,6 +2,25 @@
 
 Base URL (dev): `http://localhost:13000`
 
+## Versioning & Swagger (implémenté)
+- **v1** est la version stable (préférée)
+- `/api/*` reste disponible pour compatibilité (legacy)
+- **Swagger UI**: `GET /docs`
+- **OpenAPI JSON**: `GET /v1/openapi.json`
+
+### Endpoints actifs (v1 minimal)
+- `GET /healthz`
+- `POST /v1/seed?dryRun=true|false`
+- `GET /v1/items`
+- `GET /v1/audit`
+- `POST /v1/projects`
+- `GET /v1/projects`
+
+### Legacy
+- `POST /api/seed?dryRun=true|false`
+- `GET /api/items`
+- `GET /api/audit`
+
 ## Auth (v0)
 - **Disabled** for MVP (local dev). Will be enforced by gateway later (Keycloak OIDC).
 
