@@ -33,7 +33,7 @@ function json(res, status, obj) {
     'content-type': 'application/json',
     'access-control-allow-origin': '*',
     'access-control-allow-headers': 'content-type,x-seed-token,x-role',
-    'access-control-allow-methods': 'GET,POST,PATCH,OPTIONS',
+    'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
   });
   res.end(JSON.stringify(obj));
 }
@@ -55,6 +55,24 @@ function parseUrl(req) {
 }
 
 
+const VALID_ITEM_TYPES = new Set(['epic','story','task','bug']);
+const VALID_PRIORITIES = new Set(['low','med','high','critical']);
+const VALID_STATUSES = new Set(['backlog','todo','doing','review','done']);
+
+function sanitizeString(value, { max = 500 } = {}) {
+  if (typeof value !== 'string') return null;
+  const v = value.trim();
+  if (!v) return null;
+  return v.length > max ? v.slice(0, max) : v;
+}
+
+function parseList(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.map(String);
+  return String(value).split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+
 const openapi = {
   openapi: '3.0.3',
   info: {
@@ -71,6 +89,10 @@ const openapi = {
         parameters: [
           { name: 'limit', in: 'query', schema: { type: 'integer' } },
           { name: 'offset', in: 'query', schema: { type: 'integer' } },
+          { name: 'status', in: 'query', schema: { type: 'string' } },
+          { name: 'type', in: 'query', schema: { type: 'string' } },
+          { name: 'assignee', in: 'query', schema: { type: 'string' } },
+          { name: 'tag', in: 'query', schema: { type: 'string' } },
         ],
         responses: { '200': { description: 'Items', content: { 'application/json': { schema: { $ref: '#/components/schemas/ItemsResponse' } } } } },
       },
@@ -82,6 +104,7 @@ const openapi = {
     '/v1/items/{itemId}': {
       get: { summary: 'Get item', responses: { '200': { description: 'Item', content: { 'application/json': { schema: { $ref: '#/components/schemas/Item' } } } }, '404': { description: 'Not found' } } },
       patch: { summary: 'Update item', responses: { '200': { description: 'Updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/Item' } } } } } },
+      delete: { summary: 'Delete item', responses: { '204': { description: 'Deleted' }, '404': { description: 'Not found' } } },
     },
     '/api/seed': { post: { summary: 'Legacy seed', parameters: [{ name: 'dryRun', in: 'query', schema: { type: 'boolean' } }], responses: { '200': { description: 'Seed result' } } } },
     '/v1/seed': { post: { summary: 'Seed data (v1)', parameters: [{ name: 'dryRun', in: 'query', schema: { type: 'boolean' } }], responses: { '200': { description: 'Seed result' } } } },
@@ -93,6 +116,8 @@ const openapi = {
     },
     '/v1/projects/{projectId}': {
       get: { summary: 'Get project', responses: { '200': { description: 'Project', content: { 'application/json': { schema: { $ref: '#/components/schemas/Project' } } } }, '404': { description: 'Not found' } } },
+      patch: { summary: 'Update project', responses: { '200': { description: 'Updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/Project' } } } } } },
+      delete: { summary: 'Delete project', responses: { '204': { description: 'Deleted' }, '404': { description: 'Not found' } } },
     },
     '/v1/openapi.json': { get: { summary: 'OpenAPI spec', responses: { '200': { description: 'OpenAPI JSON' } } } },
     '/docs': { get: { summary: 'Swagger UI', responses: { '200': { description: 'HTML' } } } },
@@ -104,7 +129,7 @@ const openapi = {
       Link: { type: 'object', properties: { id: { type: 'string' }, fromId: { type: 'string' }, toId: { type: 'string' }, type: { type: 'string' } } },
       AuditEvent: { type: 'object', properties: { id: { type: 'string' }, action: { type: 'string' }, role: { type: 'string' }, at: { type: 'string' } } },
       ErrorResponse: { type: 'object', properties: { error: { type: 'string' }, message: { type: 'string' } } },
-      ItemsResponse: { type: 'object', properties: { items: { type: 'array', items: { $ref: '#/components/schemas/Item' } } } },
+      ItemsResponse: { type: 'object', properties: { items: { type: 'array', items: { $ref: '#/components/schemas/Item' } } , total: { type: 'integer' }, limit: { type: 'integer' }, offset: { type: 'integer' } } },
       ProjectsResponse: { type: 'object', properties: { items: { type: 'array', items: { $ref: '#/components/schemas/Project' } } } },
     },
   },
@@ -149,7 +174,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(204, {
         'access-control-allow-origin': '*',
         'access-control-allow-headers': 'content-type,x-seed-token,x-role',
-        'access-control-allow-methods': 'GET,POST,PATCH,OPTIONS',
+        'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
       });
       return res.end();
     }
@@ -181,7 +206,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     // POST /api/seed?dryRun=true|false
-    if (req.method === 'POST' && req.url.startsWith('/api/seed')) {
+    if (req.method === 'POST' && (req.url.startsWith('/api/seed') || req.url.startsWith('/v1/seed'))) {
       const role = getRole(req);
       if (!can(role, 'seed:write')) return json(res, 403, { error: 'forbidden' });
       const url = new URL(req.url, 'http://localhost');
@@ -236,19 +261,110 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { applied: !dryRun, dryRun, created, updated, warnings });
     }
 
-    // GET /api/items
-    if (req.method === 'GET' && req.url === '/api/items') {
-      const role = getRole(req);
-      if (!can(role, 'items:read')) return json(res, 403, { error: 'forbidden' });
+    // GET /api/items (legacy) + /v1/items
+    if (req.method === 'GET') {
+      const url = parseUrl(req);
+      const path = url.pathname;
+      if (path === '/api/items' || path === '/v1/items') {
+        const role = getRole(req);
+        if (!can(role, 'items:read')) return json(res, 403, { error: 'forbidden' });
+        const limit = Number(url.searchParams.get('limit') || 200);
+        const offset = Number(url.searchParams.get('offset') || 0);
+      let allItems = Array.from(mem.items.values());
+      const status = url.searchParams.get('status');
+      const type = url.searchParams.get('type');
+      const assignee = url.searchParams.get('assignee');
+      const tag = url.searchParams.get('tag');
+      if (status) allItems = allItems.filter((i) => i.status === status);
+      if (type) allItems = allItems.filter((i) => i.type === type);
+      if (assignee) allItems = allItems.filter((i) => (i.assignee || '') === assignee);
+      if (tag) allItems = allItems.filter((i) => Array.isArray(i.tags) && i.tags.includes(tag));
+      const items = allItems.slice(offset, offset + limit);
       return json(res, 200, {
         project: mem.project,
-        items: Array.from(mem.items.values()),
+        items,
         links: Array.from(mem.links.values()),
+        total: allItems.length,
+        limit,
+        offset,
       });
+    }
+    }
+
+    // GET /v1/items/{itemId}
+    if (req.method === 'GET' && req.url.startsWith('/v1/items/')) {
+      const role = getRole(req);
+      if (!can(role, 'items:read')) return json(res, 403, { error: 'forbidden' });
+      const url = parseUrl(req);
+      const itemId = url.pathname.split('/')[3];
+      const item = mem.items.get(itemId);
+      if (!item) return json(res, 404, { error: 'not_found' });
+      return json(res, 200, item);
+    }
+
+    // POST /v1/items
+    if (req.method === 'POST' && req.url === '/v1/items') {
+      const role = getRole(req);
+      if (!can(role, 'projects:write')) return json(res, 403, { error: 'forbidden' });
+      const body = (await readJson(req)) || {};
+      const title = sanitizeString(body.title, { max: 200 });
+      if (!title) return json(res, 400, { error: 'invalid_request', message: 'title is required' });
+      const item = {
+        id: id('item'),
+        type: VALID_ITEM_TYPES.has(body.type) ? body.type : 'story',
+        title,
+        status: VALID_STATUSES.has(body.status) ? body.status : 'todo',
+        description: sanitizeString(body.description, { max: 2000 }) || '',
+        priority: VALID_PRIORITIES.has(body.priority) ? body.priority : 'med',
+        assignee: sanitizeString(body.assignee, { max: 120 }),
+        tags: parseList(body.tags),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      mem.items.set(item.id, item);
+      auditLog('items:create', role, { itemId: item.id });
+      return json(res, 201, item);
+    }
+
+    // PATCH /v1/items/{itemId}
+    if (req.method === 'PATCH' && req.url.startsWith('/v1/items/')) {
+      const role = getRole(req);
+      if (!can(role, 'projects:write')) return json(res, 403, { error: 'forbidden' });
+      const url = parseUrl(req);
+      const itemId = url.pathname.split('/')[3];
+      const current = mem.items.get(itemId);
+      if (!current) return json(res, 404, { error: 'not_found' });
+      const body = (await readJson(req)) || {};
+      const patch = { ...body };
+      if ('title' in patch) patch.title = sanitizeString(patch.title, { max: 200 });
+      if ('description' in patch) patch.description = sanitizeString(patch.description, { max: 2000 }) || '';
+      if ('type' in patch) patch.type = VALID_ITEM_TYPES.has(patch.type) ? patch.type : current.type;
+      if ('status' in patch) patch.status = VALID_STATUSES.has(patch.status) ? patch.status : current.status;
+      if ('priority' in patch) patch.priority = VALID_PRIORITIES.has(patch.priority) ? patch.priority : current.priority;
+      if ('assignee' in patch) patch.assignee = sanitizeString(patch.assignee, { max: 120 });
+      if ('tags' in patch) patch.tags = parseList(patch.tags);
+      const next = { ...current, ...patch, updatedAt: new Date().toISOString() };
+      mem.items.set(itemId, next);
+      auditLog('items:update', role, { itemId });
+      return json(res, 200, next);
+    }
+
+    // DELETE /v1/items/{itemId}
+    if (req.method === 'DELETE' && req.url.startsWith('/v1/items/')) {
+      const role = getRole(req);
+      if (!can(role, 'projects:write')) return json(res, 403, { error: 'forbidden' });
+      const url = parseUrl(req);
+      const itemId = url.pathname.split('/')[3];
+      const current = mem.items.get(itemId);
+      if (!current) return json(res, 404, { error: 'not_found' });
+      mem.items.delete(itemId);
+      auditLog('items:delete', role, { itemId });
+      res.writeHead(204, { 'access-control-allow-origin': '*' });
+      return res.end();
     }
 
     // GET /api/audit
-    if (req.method === 'GET' && req.url === '/api/audit') {
+    if (req.method === 'GET' && (req.url === '/api/audit' || req.url === '/v1/audit')) {
       const role = getRole(req);
       if (!can(role, 'audit:read')) return json(res, 403, { error: 'forbidden' });
       return json(res, 200, { items: mem.audit.slice(-200) });
@@ -260,7 +376,7 @@ const server = http.createServer(async (req, res) => {
       if (!can(role, 'projects:write')) return json(res, 403, { error: 'forbidden' });
 
       const body = (await readJson(req)) || {};
-      const name = typeof body.name === 'string' && body.name.trim() ? body.name.trim() : null;
+      const name = sanitizeString(body.name, { max: 200 });
       if (!name) return json(res, 400, { error: 'invalid_request', message: 'name is required' });
 
       const project = { id: id('prj'), name, createdAt: new Date().toISOString() };
@@ -274,6 +390,52 @@ const server = http.createServer(async (req, res) => {
 
       auditLog('projects:create', role, { projectId: project.id, name: project.name });
       return json(res, 201, project);
+    }
+
+    // PATCH /v1/projects/{projectId}
+    if (req.method === 'PATCH' && req.url.startsWith('/v1/projects/')) {
+      const role = getRole(req);
+      if (!can(role, 'projects:write')) return json(res, 403, { error: 'forbidden' });
+      const url = parseUrl(req);
+      const projectId = url.pathname.split('/')[3];
+      const body = (await readJson(req)) || {};
+      const name = sanitizeString(body.name, { max: 200 });
+      if (!name) return json(res, 400, { error: 'invalid_request', message: 'name is required' });
+      const client = await pgClient();
+      if (client) {
+        await client.query('update projects set name=$1 where id=$2', [name, projectId]);
+        const r = await client.query('select id, name, created_at from projects where id=$1', [projectId]);
+        if (!r.rows[0]) return json(res, 404, { error: 'not_found' });
+        const x = r.rows[0];
+        auditLog('projects:update', role, { projectId });
+        return json(res, 200, { id: x.id, name: x.name, createdAt: x.created_at });
+      }
+      const current = mem.projects.get(projectId);
+      if (!current) return json(res, 404, { error: 'not_found' });
+      const next = { ...current, name, updatedAt: new Date().toISOString() };
+      mem.projects.set(projectId, next);
+      auditLog('projects:update', role, { projectId });
+      return json(res, 200, next);
+    }
+
+    // DELETE /v1/projects/{projectId}
+    if (req.method === 'DELETE' && req.url.startsWith('/v1/projects/')) {
+      const role = getRole(req);
+      if (!can(role, 'projects:write')) return json(res, 403, { error: 'forbidden' });
+      const url = parseUrl(req);
+      const projectId = url.pathname.split('/')[3];
+      const client = await pgClient();
+      if (client) {
+        const r = await client.query('select id from projects where id=$1', [projectId]);
+        if (!r.rows[0]) return json(res, 404, { error: 'not_found' });
+        await client.query('delete from projects where id=$1', [projectId]);
+      } else {
+        if (!mem.projects.has(projectId)) return json(res, 404, { error: 'not_found' });
+        mem.projects.delete(projectId);
+      }
+      auditLog('projects:delete', role, { projectId });
+      res.writeHead(204, { 'access-control-allow-origin': '*' });
+      return res.end();
     }
 
     // GET /v1/projects/{projectId}
