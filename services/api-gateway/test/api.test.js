@@ -64,7 +64,7 @@ test('POST /api/seed + GET /api/items', async () => {
 
 
 test('v1 CRUD items', async () => {
-  const base = process.env.API_BASE || 'http://localhost:13000';
+  const base = process.env.API_BASE || 'http://127.0.0.1:3000';
   const headers = { 'content-type': 'application/json', 'x-role': 'admin' };
 
   // create
