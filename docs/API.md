@@ -11,10 +11,17 @@ Base URL (dev): `http://localhost:13000`
 ### Endpoints actifs (v1 minimal)
 - `GET /healthz`
 - `POST /v1/seed?dryRun=true|false`
-- `GET /v1/items`
+- `GET /v1/items` (pagination: `limit`, `offset`, filtres: `status`, `type`, `assignee`, `tag`)
+- `GET /v1/items/{itemId}`
+- `POST /v1/items`
+- `PATCH /v1/items/{itemId}`
+- `DELETE /v1/items/{itemId}`
 - `GET /v1/audit`
 - `POST /v1/projects`
 - `GET /v1/projects`
+- `GET /v1/projects/{projectId}`
+- `PATCH /v1/projects/{projectId}`
+- `DELETE /v1/projects/{projectId}`
 
 ### Legacy
 - `POST /api/seed?dryRun=true|false`
