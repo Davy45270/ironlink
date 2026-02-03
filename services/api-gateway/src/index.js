@@ -38,9 +38,50 @@ function json(res, status, obj) {
   res.end(JSON.stringify(obj));
 }
 
+function html(res, status, body) {
+  res.writeHead(status, {
+    'content-type': 'text/html; charset=utf-8',
+    'access-control-allow-origin': '*',
+  });
+  res.end(body);
+}
+
 function id(prefix = 'p') {
   return `${prefix}_${Math.random().toString(16).slice(2)}${Date.now().toString(16)}`;
 }
+
+
+const openapi = {
+  openapi: '3.0.3',
+  info: {
+    title: 'IronLink API',
+    version: '1.0.0',
+  },
+  servers: [{ url: '/' }],
+  paths: {
+    '/healthz': { get: { summary: 'Health check', responses: { '200': { description: 'OK' } } } },
+    '/api/items': { get: { summary: 'Legacy items list', responses: { '200': { description: 'Items' } } } },
+    '/v1/items': { get: { summary: 'Items list (v1)', responses: { '200': { description: 'Items' } } } },
+    '/api/seed': { post: { summary: 'Legacy seed', parameters: [{ name: 'dryRun', in: 'query', schema: { type: 'boolean' } }], responses: { '200': { description: 'Seed result' } } } },
+    '/v1/seed': { post: { summary: 'Seed data (v1)', parameters: [{ name: 'dryRun', in: 'query', schema: { type: 'boolean' } }], responses: { '200': { description: 'Seed result' } } } },
+    '/api/audit': { get: { summary: 'Legacy audit', responses: { '200': { description: 'Audit list' } } } },
+    '/v1/audit': { get: { summary: 'Audit list (v1)', responses: { '200': { description: 'Audit list' } } } },
+    '/v1/projects': {
+      get: { summary: 'List projects', responses: { '200': { description: 'Projects' } } },
+      post: { summary: 'Create project', responses: { '201': { description: 'Created' } } },
+    },
+    '/v1/openapi.json': { get: { summary: 'OpenAPI spec', responses: { '200': { description: 'OpenAPI JSON' } } } },
+    '/docs': { get: { summary: 'Swagger UI', responses: { '200': { description: 'HTML' } } } },
+  },
+  components: {
+    schemas: {
+      Project: { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, createdAt: { type: 'string' } } },
+      Item: { type: 'object', properties: { id: { type: 'string' }, type: { type: 'string' }, title: { type: 'string' }, status: { type: 'string' } } },
+      Link: { type: 'object', properties: { id: { type: 'string' }, fromId: { type: 'string' }, toId: { type: 'string' }, type: { type: 'string' } } },
+      AuditEvent: { type: 'object', properties: { id: { type: 'string' }, action: { type: 'string' }, role: { type: 'string' }, at: { type: 'string' } } },
+    },
+  },
+};
 
 // In-memory fallback (dev only)
 const mem = { projects: new Map(), items: new Map(), links: new Map(), project: null, audit: [] };
@@ -87,6 +128,30 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.url === '/healthz') return json(res, 200, { ok: true, service: 'api-gateway' });
+
+
+    if (req.method === 'GET' && req.url === '/v1/openapi.json') {
+      return json(res, 200, openapi);
+    }
+
+    if (req.method === 'GET' && req.url === '/docs') {
+      const htmlBody = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>IronLink API Docs</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+  </head>
+  <body>
+    <div id="swagger"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script>
+      window.ui = SwaggerUIBundle({ url: '/v1/openapi.json', dom_id: '#swagger' });
+    </script>
+  </body>
+</html>`;
+      return html(res, 200, htmlBody);
+    }
 
     // POST /api/seed?dryRun=true|false
     if (req.method === 'POST' && req.url.startsWith('/api/seed')) {

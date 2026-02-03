@@ -1,10 +1,15 @@
 api:
-  - "services/**"
+  - changed-files:
+      - any-glob-to-any-file: "services/**"
 ui:
-  - "apps/**"
+  - changed-files:
+      - any-glob-to-any-file: "apps/**"
 docs:
-  - "docs/**"
+  - changed-files:
+      - any-glob-to-any-file: "docs/**"
 seed:
-  - "seed/**"
+  - changed-files:
+      - any-glob-to-any-file: "seed/**"
 ci:
-  - ".github/**"
+  - changed-files:
+      - any-glob-to-any-file: ".github/**"
