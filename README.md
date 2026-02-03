@@ -49,3 +49,4 @@ Next step: scaffold repo + pick tech stack (likely: TypeScript + NestJS for serv
 - Ops Persona: docs/PERSONAS-OPS.md
 - Auth & rôles: docs/AUTH.md
 - Backlog: docs/BACKLOG.md
+- Docker Compose (dev): docs/DOCKER-COMPOSE.md
