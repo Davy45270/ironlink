@@ -11,5 +11,8 @@
     "format": "prettier -w .",
     "test": "npm --workspace services/api-gateway test",
     "dev": "echo 'dev: TODO'"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.2"
   }
 }
